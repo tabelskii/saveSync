@@ -1,28 +1,26 @@
-package main
+package client
 
 import (
 	"bufio"
 	"encoding/binary"
 	"fmt"
-	"github.com/sandipmavani/hardwareid"
 	"net"
 	"os"
-	"path/filepath"
 )
 
-func sendInt64(conn net.Conn, value int64) {
+func SendInt64(conn net.Conn, value int64) {
 	valueConverted := make([]byte, 8)
 	binary.PutVarint(valueConverted, value)
 	conn.Write(valueConverted)
 }
 
-func writePartiton(conn net.Conn, data []byte) {
+func WritePartiton(conn net.Conn, data []byte) {
 	length := len(data)
-	sendInt64(conn, int64(length))
+	SendInt64(conn, int64(length))
 	conn.Write(data)
 }
 
-func sendFile(conn net.Conn, path string, bufferSize int) {
+func SendFile(conn net.Conn, path string, bufferSize int) {
 	file, err := os.Open(path)
 
 	if err != nil {
@@ -35,9 +33,9 @@ func sendFile(conn net.Conn, path string, bufferSize int) {
 
 	conn.Write([]byte{0})
 	fmt.Println("Write zero byte")
-	writePartiton(conn, []byte(path))
+	WritePartiton(conn, []byte(path))
 	fmt.Println("Write path: ", path)
-	sendInt64(conn, fileSize)
+	SendInt64(conn, fileSize)
 	fmt.Println("Write file size:", fileSize)
 
 	reader := bufio.NewReader(file)
@@ -56,26 +54,5 @@ func sendFile(conn net.Conn, path string, bufferSize int) {
 		fmt.Println("Write ", string(buffer))
 		conn.Write(buffer)
 	}
-
-}
-
-func main() {
-	hardwareId, _ := hardwareid.ID()
-
-	conn, _ := net.Dial("tcp", "127.0.0.1:9000")
-	writePartiton(conn, []byte("kirill"))
-	writePartiton(conn, []byte("1234"))
-	writePartiton(conn, []byte(hardwareId))
-
-	response := make([]byte, 1)
-	conn.Read(response)
-	isAuthorized := response[0] == 1
-
-	if !isAuthorized {
-		return
-	}
-	fname := "./client/data_to_send"
-	fname, _ = filepath.Abs(fname)
-	sendFile(conn, fname, 3)
 
 }

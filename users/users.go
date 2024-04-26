@@ -11,6 +11,7 @@ type UserProfile struct {
 	Name       string
 	Authorized bool
 	HardwareId string
+	Id         uint
 }
 
 func (user *UserProfile) GetFolder() string {

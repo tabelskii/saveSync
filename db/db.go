@@ -26,8 +26,8 @@ func GetDB() *gorm.DB {
 }
 
 type User struct {
-	ID       uint `gorm:"primarykey"`
-	Name     string
+	ID       uint   `gorm:"primarykey"`
+	Name     string `gorm:"uniqueIndex"`
 	Password string
 	Files    []File
 	Machines []Machine
@@ -69,14 +69,32 @@ func (FileHistory) TableName() string {
 }
 
 type Machine struct {
-	ID         uint `gorm:"primarykey"`
-	UserID     int
-	HardWareId string
+	ID         uint   `gorm:"primarykey"`
+	UserID     int    `gorm:"uniqueIndex:idx_machine"`
+	HardWareId string `gorm:"uniqueIndex:idx_machine"`
 }
 
 type Folder struct {
-	ID        uint `gorm:"primarykey"`
-	Path      string
-	MachineID int
+	ID        uint   `gorm:"primarykey"`
+	Path      string `gorm:"uniqueIndex:idx_path"`
+	MachineID int    `gorm:"uniqueIndex:idx_path"`
 	Files     []File `gorm:"many2many:folder_files;"`
+}
+
+type Model interface {
+	User | File | FileHistory | Machine | Folder
+}
+
+func GetOrCreate[M Model](model *M) *gorm.DB {
+	db := GetDB()
+	tx := db.Where(model).First(model)
+	if tx.Error != nil && tx.Error.Error() == "record not found" {
+		tx = db.Create(model)
+	}
+	return tx
+
+	//	if *model.ID == 0 {
+	//		fmt.Println(db.Create(model))
+	//	}
+	//}
 }
