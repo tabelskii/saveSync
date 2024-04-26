@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16.2-alpine3.18
+    environment:
+      - POSTGRES_DB=save_sync
+      - POSTGRES_USER=sync
+      - POSTGRES_PASSWORD=1234
+    ports:
+      - 5432:5432
